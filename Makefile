@@ -28,7 +28,7 @@ genl_ex:
 .PHONY:clean
 clean:
 	make -C $(KDIR) M=$(PWD) clean
-	rm -f *.o $(EXAMPLE)
+	rm -f *.o $(EXAMPLE) $(APP)
 
 deploy:
 	tar czf programs.tar.gz $(APP) $(EXAMPLE) genl_drv.ko
