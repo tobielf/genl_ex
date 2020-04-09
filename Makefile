@@ -1,28 +1,36 @@
+KDIR:=/opt/iot-devkit/1.7.2/sysroots/i586-poky-linux/usr/src/kernel
+CC = i586-poky-linux-gcc
+CROSS_COMPILE = i586-poky-linux-
 
-PKG_CONFIG=$(shell dirname ${CROSS_COMPILE})/pkg-config
-NL_LIBNAME=libnl-genl-3.0
+PWD:= $(shell pwd)
 
-NL_LIB_FLAGS=$(shell $(PKG_CONFIG) --cflags $(NL_LIBNAME))
-NL_LIBS_L=$(shell $(PKG_CONFIG) --libs-only-L $(NL_LIBNAME))
-NL_LIBS_l=$(shell $(PKG_CONFIG) --libs-only-l $(NL_LIBNAME))
+ARCH = x86
+SROOT=/opt/iot-devkit/1.7.2/sysroots/i586-poky-linux
+EXTRA_CFLAGS += -Wall
 
-CC=${CROSS_COMPILE}gcc
+LDLIBS = -L$(SROOT)/usr/lib
+CCFLAGS = -I$(SROOT)/usr/include/libnl3
+
+APP = 
+EXAMPLE = genl_ex
+
+obj-m:= genl_drv.o
 
 .PHONY:all
 all: genl_ex genl_ex.ko
 
-genl_ex: genl_ex.h genl_ex.c
-	$(CC) -Wextra -Wall -Werror -Wno-unused-parameter genl_ex.c $(NL_LIB_FLAGS) $(NL_LIBS_L) $(NL_LIBS_l) -o genl_ex
-
 genl_ex.ko:
-	$(MAKE) -C $(shell pwd)/kernel KERNEL_DIR=$(KERNEL_DIR) 
+	make ARCH=x86 CROSS_COMPILE=$(CROSS_COMPILE) -C $(KDIR) M=$(PWD) modules
 
-.PHONY: install
-install:
-	$(MAKE) -C $(shell pwd)/kernel install
+genl_ex:
+	$(CC) -Wall -o $(EXAMPLE) genl_ex.c $(CCFLAGS) -lnl-genl-3 -lnl-3
 
-.PHONY: clean
+.PHONY:clean
 clean:
-	rm -f *.o genl_ex
-	$(MAKE) -C $(shell pwd)/kernel KERNEL_DIR=$(KERNEL_DIR) clean
+	make -C $(KDIR) M=$(PWD) clean
+	rm -f *.o $(EXAMPLE)
 
+deploy:
+	tar czf programs.tar.gz $(APP) $(EXAMPLE) genl_drv.ko
+	scp programs.tar.gz root@10.0.1.100:/home/root
+	ssh root@10.0.1.100 'tar xzf programs.tar.gz'
