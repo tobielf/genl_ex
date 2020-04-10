@@ -13,11 +13,12 @@ CCFLAGS = -I$(SROOT)/usr/include/libnl3
 
 APP = 
 EXAMPLE = genl_ex
+SPI = spi_tester
 
 obj-m:= genl_drv.o
 
 .PHONY:all
-all: genl_ex genl_ex.ko
+all: spi_tester genl_ex genl_ex.ko
 
 genl_ex.ko:
 	make ARCH=x86 CROSS_COMPILE=$(CROSS_COMPILE) -C $(KDIR) M=$(PWD) modules
@@ -25,12 +26,16 @@ genl_ex.ko:
 genl_ex:
 	$(CC) -Wall -o $(EXAMPLE) genl_ex.c $(CCFLAGS) -lnl-genl-3 -lnl-3
 
+spi_tester:
+	$(CC) -Wall -o $(SPI) spi_tester.c
+
+
 .PHONY:clean
 clean:
 	make -C $(KDIR) M=$(PWD) clean
-	rm -f *.o $(EXAMPLE) $(APP)
+	rm -f *.o $(EXAMPLE) $(APP) $(SPI)
 
 deploy:
-	tar czf programs.tar.gz $(APP) $(EXAMPLE) genl_drv.ko
+	tar czf programs.tar.gz $(APP) $(EXAMPLE) $(SPI) genl_drv.ko
 	scp programs.tar.gz root@10.0.1.100:/home/root
 	ssh root@10.0.1.100 'tar xzf programs.tar.gz'
